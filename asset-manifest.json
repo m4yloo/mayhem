@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/mayhem/static/css/main.0061e9dc.css",
+    "main.js": "/mayhem/static/js/main.81d033c6.js",
+    "index.html": "/mayhem/index.html",
+    "main.0061e9dc.css.map": "/mayhem/static/css/main.0061e9dc.css.map",
+    "main.81d033c6.js.map": "/mayhem/static/js/main.81d033c6.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.0061e9dc.css",
+    "static/js/main.81d033c6.js"
+  ]
+}
