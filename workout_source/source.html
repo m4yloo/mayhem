@@ -1,0 +1,141 @@
+
+<style>
+  .plan { padding: 1rem 0; }
+  .week-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+  .day-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem; cursor: pointer; transition: border-color 0.15s; }
+  .day-card:hover { border-color: var(--color-border-secondary); }
+  .day-card.active { border: 1.5px solid var(--color-border-info); }
+  .day-label { font-size: 11px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .day-name { font-size: 15px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 2px; }
+  .day-tag { font-size: 12px; color: var(--color-text-secondary); }
+  .rest-card { opacity: 0.5; cursor: default; }
+  .detail { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 1.25rem; }
+  .detail-title { font-size: 16px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
+  .detail-sub { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 1rem; }
+  .exercise { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .exercise:last-child { border-bottom: none; }
+  .ex-name { font-size: 14px; color: var(--color-text-primary); }
+  .ex-sets { font-size: 13px; color: var(--color-text-secondary); white-space: nowrap; margin-left: 8px; }
+  .note { font-size: 12px; color: var(--color-text-tertiary); margin-top: 1rem; }
+</style>
+
+<div class="plan">
+  <div class="week-grid" id="week"></div>
+  <div class="detail" id="detail"></div>
+</div>
+
+<script>
+const days = [
+  {
+    label: "Mon", name: "Push", tag: "chest · shoulders · triceps",
+    exercises: [
+      { name: "Push-ups (weighted if easy)", sets: "4 × 12–15" },
+      { name: "Dumbbell bench press", sets: "4 × 10–12" },
+      { name: "Dumbbell shoulder press", sets: "3 × 10–12" },
+      { name: "Lateral raises", sets: "3 × 12–15" },
+      { name: "Tricep dips (floor or bench)", sets: "3 × 12" },
+      { name: "Diamond push-ups", sets: "2 × failure" },
+    ],
+    note: "Rest 60–90s between sets. Go slow on the way down."
+  },
+  {
+    label: "Tue", name: "Pull", tag: "back · biceps",
+    exercises: [
+      { name: "Pull-ups", sets: "4 × max reps" },
+      { name: "Dumbbell rows", sets: "4 × 10–12 each" },
+      { name: "Inverted rows (under table)", sets: "3 × 12" },
+      { name: "Dumbbell curls", sets: "3 × 12" },
+      { name: "Hammer curls", sets: "3 × 12" },
+      { name: "Face pulls (improvised)", sets: "3 × 15" },
+    ],
+    note: "Pull-ups are the main event — do them first when fresh."
+  },
+  {
+    label: "Wed", name: "Legs + Core", tag: "quads · hamstrings · abs",
+    exercises: [
+      { name: "Goblet squats (dumbbell)", sets: "4 × 12" },
+      { name: "Romanian deadlifts (dumbbell)", sets: "4 × 10" },
+      { name: "Bulgarian split squats", sets: "3 × 10 each" },
+      { name: "Glute bridges", sets: "3 × 15" },
+      { name: "Plank", sets: "3 × 45–60s" },
+      { name: "Leg raises", sets: "3 × 15" },
+    ],
+    note: "Split squats are brutal but this is where the lean look comes from."
+  },
+  {
+    label: "Thu", name: "Rest", tag: "active recovery",
+    rest: true,
+    exercises: [],
+    note: "Walk, stretch, eat. Let the muscles actually grow."
+  },
+  {
+    label: "Fri", name: "Push", tag: "chest · shoulders · triceps",
+    exercises: [
+      { name: "Pike push-ups", sets: "4 × 12" },
+      { name: "Dumbbell flyes", sets: "4 × 12" },
+      { name: "Arnold press", sets: "3 × 10" },
+      { name: "Front raises", sets: "3 × 12" },
+      { name: "Tricep kickbacks", sets: "3 × 12" },
+      { name: "Push-up variations", sets: "2 × failure" },
+    ],
+    note: "Different push exercises than Monday to hit different angles."
+  },
+  {
+    label: "Sat", name: "Pull", tag: "back · biceps · core",
+    exercises: [
+      { name: "Pull-ups (wide grip)", sets: "4 × max" },
+      { name: "Dumbbell deadlifts", sets: "4 × 10" },
+      { name: "Renegade rows", sets: "3 × 8 each" },
+      { name: "Concentration curls", sets: "3 × 12" },
+      { name: "Reverse curls", sets: "3 × 12" },
+      { name: "Hollow body hold", sets: "3 × 30s" },
+    ],
+    note: "Heavier and slower than Tuesday. This is the strength day."
+  },
+  {
+    label: "Sun", name: "Rest", tag: "full recovery",
+    rest: true,
+    exercises: [],
+    note: "Full off day. Sleep, eat, game, whatever."
+  },
+];
+
+let active = 0;
+
+function renderWeek() {
+  const grid = document.getElementById('week');
+  grid.innerHTML = days.map((d, i) => `
+    <div class="day-card${d.rest ? ' rest-card' : ''}${i === active ? ' active' : ''}" onclick="${d.rest ? '' : `setDay(${i})`}">
+      <div class="day-label">${d.label}</div>
+      <div class="day-name">${d.name}</div>
+      <div class="day-tag">${d.tag}</div>
+    </div>
+  `).join('');
+}
+
+function renderDetail() {
+  const d = days[active];
+  const detail = document.getElementById('detail');
+  if (d.rest) { detail.innerHTML = ''; return; }
+  detail.innerHTML = `
+    <div class="detail-title">${d.label} — ${d.name}</div>
+    <div class="detail-sub">${d.tag}</div>
+    ${d.exercises.map(e => `
+      <div class="exercise">
+        <span class="ex-name">${e.name}</span>
+        <span class="ex-sets">${e.sets}</span>
+      </div>
+    `).join('')}
+    <div class="note">${d.note}</div>
+  `;
+}
+
+function setDay(i) {
+  active = i;
+  renderWeek();
+  renderDetail();
+}
+
+renderWeek();
+renderDetail();
+</script>
